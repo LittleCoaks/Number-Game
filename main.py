@@ -76,12 +76,20 @@ def run_game(bottom_row):
   for val in bottom_row:
     originalPuzzle.append(val["value"])
   while run == 0:
-    # start loop by checking for win condition
+    # first set up arrays with only the int values to be printed on screen
+    printTopRow = []
+    printBottomRow = []
+    for x in top_row:
+      printTopRow.append(x['value'])
+    for x in bottom_row:
+      printBottomRow.append(x['value'])
+
+    # then start loop by checking for win condition
     if ((len(bottom_row) <= 1) and (bottom_row == [] or bottom_row[0]['value']==1) and (top_row == [])):
       run=1
       print("\n"+separator)
-      print(top_row)
-      print(bottom_row)
+      print(printTopRow)
+      print(printBottomRow)
       print(separator)
       print("\n" + separator)
       print("SOLVED")
@@ -96,13 +104,6 @@ def run_game(bottom_row):
     bottomRowLength=0
     for vals in bottom_row:
       bottomRowLength+=1
-    
-    printTopRow = []
-    printBottomRow = []
-    for x in top_row:
-      printTopRow.append(x['value'])
-    for x in bottom_row:
-      printBottomRow.append(x['value'])
 
     print("\n"+separator)
     print(printTopRow)
