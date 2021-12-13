@@ -1,3 +1,5 @@
+import random
+
 def help():
   print("\nCommands:")
   print("split [x] [y]")
@@ -16,11 +18,10 @@ def help():
 # returns the first ndex where number exists
 # if not exists, returns -1
 def findNumInRow(row,num):
-  index = -1
+  index = []
   for i in range(0, len(row)):
-    if int(row[i]) == int(num):
-      index = i
-      return index
+    if int(row[i]['value']) == int(num):
+      index.append(i)
   return index
 
 # index 0 is number of instances where digit was found in the number
@@ -60,63 +61,106 @@ def bArgIsInt(lis, i):
     pass
   return bIsInt
 
+# num is the index here
 def split(bottom_row,top_row,num,splitOut):
   # operation for even numbers
-  if bottom_row[num]%2 == 0:
-    bottom_row[num]=int(bottom_row[num]/2)
+  if bottom_row[num]['value']%2 == 0:
+    bottom_row[num]['value']=int(bottom_row[num]['value']/2)
+    generateID(bottom_row, top_row, bottom_row[num])
     addTop(top_row,bottom_row[num])
 
   # operation for odd numbers
   else:
-    if splitOut >= bottom_row[num]:
+    if splitOut >= bottom_row[num]['value']:
       print("Cannot remove more than the original value.")
       return
-    bottom_row[num]-=splitOut
-    bottom_row.append(splitOut)
+    bottom_row[num]['value']-=splitOut
+    generateID(bottom_row, top_row, bottom_row[num])
+    bottom_row.append({'value':splitOut})
+    generateID(bottom_row, top_row, bottom_row[-1]) # make ID for last item, which is the item just appended
 
-
-def merge(bottom_row,num1):
+# num1 is the value that the user wants to merge, not the index
+def merge(bottom_row, top_row, num1):
   mergedRow=[]
   hasMerged=False
-  for vals in bottom_row:
-    if (vals != num1):
-      mergedRow.append(vals)
-    if (vals == num1 and hasMerged==False):
-      mergedRow.append(vals)
+  for i in range(0, len(bottom_row)):
+    if (bottom_row[i]['value'] != num1['value']):
+      mergedRow.append(bottom_row[i])
+    if (bottom_row[i]['value'] == num1['value'] and hasMerged==False):
+      mergedRow.append(bottom_row[i])
+      generateID(bottom_row, top_row, bottom_row[i])
       hasMerged=True
   if (hasMerged == False):
     return bottom_row
   if (hasMerged==True):
     return mergedRow
 
-
+# top and bottom are arrays of possible indeces here
 def cancel(topRow,bottomRow,top,bottom,digit):
-  topDigit=topRow[top]
-  bottomRowVal=bottomRow[bottom]
-  bottomRowLen=len(str(bottomRowVal))
-  revisedVal=int
-  hasCanceled=False
-  canceledBottom=[]
-  for digits in range(1,bottomRowLen+1):
-    y=bottomRowVal%(10**digits)
-    y=y//(10**(digits-1))
-    if digit==digits and topDigit==y:
-      revisedVal=bottomRowVal-10**(digit-1)*y
-      hasCanceled=True
-  for vals in bottomRow:
-    if vals == bottomRowVal and hasCanceled==True and revisedVal!=0:
-      canceledBottom.append(revisedVal)
-    elif not (vals == bottomRowVal and revisedVal==0):
-      canceledBottom.append(vals)
-  return canceledBottom
+  didCancel = [1,-1]
+  
+  # do this loop thing in case there's multiple nums with the same val but different ID's to avoid falsely claiming that they cannot cancel
+  for iTop in top:
+    for iBottom in bottom:
+
+      topDigit=topRow[iTop]['value']
+      bottomRowVal=bottomRow[iBottom]['value']
+      bottomRowID = bottomRow[iBottom]['ID']
+      topRowID = topRow[iTop]['ID']
+      bottomRowLen=len(str(bottomRowVal))
+      revisedVal=0
+      hasCanceled=False
+
+      # generate the new value after cancellation
+      for digits in range(1,bottomRowLen+1):
+        y=bottomRowVal%(10**digits)
+        y=y//(10**(digits-1))
+        if digit==digits and topDigit==y:
+          if (bottomRowID != topRowID):
+            revisedVal=bottomRowVal-10**(digit-1)*y
+            didCancel[0] = 0
+            hasCanceled=True
+          else:
+            didCancel[0] = 2
+
+      if (didCancel[0] == 0):
+        iCanceled = -1
+        for i in range(0, len(bottomRow)):
+          if bottomRow[i]['ID'] == bottomRowID and hasCanceled==True:
+            iCanceled = i
+            bottomRow[i]['value'] = revisedVal
+            generateID(bottomRow, topRow, bottomRow[i])
+        if iCanceled >= 0 and revisedVal == 0:
+          del bottomRow[iCanceled]
+          return didCancel
+        
+  return didCancel
 
 
 def addTop(topRow,topNum):
-  digitLen=len(str(topNum))
+  digitLen=len(str(topNum['value']))
   for digits in range(1,digitLen+1):
-    y=topNum%(10**digits)
+    y=topNum['value']%(10**digits)
     y=y//(10**(digits-1))
     if y!=0:
-      topRow.append(y)
-  return topRow
+      topRow.append({'value':y,'ID':topNum['ID']})
+  return topRow # idk if this is needed
 
+# item is the dictionary in the bottom row
+# values 1 and 2 are the bottom and top rows
+# checks if any ID's have the random one, and assigns the ID of the dictionary item to that ID
+def generateID(values1, values2, item):
+  bInvalid = True
+  xID = 0
+  while (bInvalid):
+    bInvalid = False
+    xID = random.randint(1,0x7FFFFFFF)
+    for y in values1:
+      yID = y.get("ID",0)
+      if xID == yID:
+        bInvalid = True
+    for y in values2:
+      yID = y.get("ID",0)
+      if xID == yID:
+        bInvalid = True
+    item["ID"] = xID

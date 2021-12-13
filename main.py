@@ -1,13 +1,7 @@
 import random
 import commandAction
 
-'''
-TODO:
-- comment code
-- prevent cancelation with the same number that was split
-  - use dict for each val, generate random ID for each one?
-  - can't cancel with source val
-'''
+# TODO: better comments on code; should probably clean up the code in other areas too
 
 def main():
   running=0
@@ -27,7 +21,7 @@ def main():
       running=1
   return
 
-# need to prevent 0 from being written in with a custom game 
+
 def begin_game():
   values = []
   gameType=input("\nr = random set\nc = custom set\nd = default set\nSpecify a game type: ")
@@ -39,7 +33,7 @@ def begin_game():
     if (commandAction.bArgExists(amount, 0) and commandAction.bArgExists(maxValue, 0)) and (commandAction.bArgIsInt(amount, 0) and commandAction.bArgIsInt(maxValue, 0)):
       for i in range(0,int(amount[0])):
         n=random.randint(minValue,int(maxValue[0]))
-        values.append(n)
+        values.append({"value":n})
 
   elif gameType=="c":
     customRow = input("Enter values separated by a space: ")
@@ -52,32 +46,38 @@ def begin_game():
       try:
         int(val)
         if int(val) != 0:
-          values.append(int(val))
+          values.append({"value":int(val)})
       except ValueError:
         pass
 
   elif gameType == "d":
     for i in range(0, 5):
       n=random.randint(1,50)
-      values.append(n)
+      values.append({"value":n})
 
   elif gameType=="exit":
     endProgram()
   else:
     print("Enter a valid command.")
+
+  # Here, we generate a random ID for each value in the bottom row
+  # if that ID already exists, we just generate a new one -- brute force works here but it's elegant
+  for x in values:
+    commandAction.generateID(values, [], x) # must use empty list for arg 2
+
   return values
 
+# must rewrite to account for values of each array val
 def run_game(bottom_row):
   top_row=[]
   run = 0
   turnCount=0
   originalPuzzle = []
   for val in bottom_row:
-    originalPuzzle.append(val)
+    originalPuzzle.append(val["value"])
   while run == 0:
-
     # start loop by checking for win condition
-    if ((bottom_row == [] or bottom_row==[1]) and top_row == []):
+    if ((len(bottom_row) <= 1) and (bottom_row == [] or bottom_row[0]['value']==1) and (top_row == [])):
       run=1
       print("\n"+separator)
       print(top_row)
@@ -96,11 +96,20 @@ def run_game(bottom_row):
     bottomRowLength=0
     for vals in bottom_row:
       bottomRowLength+=1
+    
+    printTopRow = []
+    printBottomRow = []
+    for x in top_row:
+      printTopRow.append(x['value'])
+    for x in bottom_row:
+      printBottomRow.append(x['value'])
+
     print("\n"+separator)
-    print(top_row)
-    print(bottom_row)
+    print(printTopRow)
+    print(printBottomRow)
     print(separator)
     command=str(input("\nEnter a command: \nType \"help\" for a list of commands: "))
+
 
     # index 0 == type of commnand
     # index 1 is number to execute command on
@@ -132,19 +141,19 @@ def run_game(bottom_row):
       if bArgOneExists and bArgOneIsInt:
         splitArgOne = int(commandArgs[1])
         splitNum = commandAction.findNumInRow(bottom_row, splitArgOne)
-        if splitNum == -1:
+        if splitNum == []:
           print("ERROR: " + str(commandArgs[1] + " doesn't exist in the bottom row."))
         else:
           if bArgTwoExists and bArgTwoIsInt:
             splitArgTwo = int(commandArgs[2])
-            if (splitArgTwo >= bottom_row[splitNum]) and (splitArgOne%2 == 1):
+            if (splitArgTwo >= bottom_row[splitNum[0]]['value']) and (splitArgOne%2 == 1):
               print("ERROR: Cannot remove more than original value.")
             else:
-              commandAction.split(bottom_row,top_row, splitNum, splitArgTwo)
+              commandAction.split(bottom_row,top_row, splitNum[0], splitArgTwo)
               turnCount+=1
           else:
             if splitArgOne%2 == 0:
-              commandAction.split(bottom_row,top_row, splitNum, -1)
+              commandAction.split(bottom_row,top_row, splitNum[0], -1)
               turnCount+=1
             else:
               lSplitOut = input("How much should be removed from " + str(commandArgs[1]) + "? ").split()
@@ -153,7 +162,7 @@ def run_game(bottom_row):
                 if splitOut >= splitArgOne:
                   print("ERROR: Cannot remove more than original value.")
                 else:
-                  commandAction.split(bottom_row,top_row,splitNum, splitOut)
+                  commandAction.split(bottom_row,top_row,splitNum[0], splitOut)
               else:
                 print("ERROR: " + lSplitOut[1] + " is not a valid number.\n")
     
@@ -173,12 +182,12 @@ def run_game(bottom_row):
 
       if bArgOneExists and bArgOneIsInt:
           mergeNum = commandAction.findNumInRow(bottom_row, int(commandArgs[1]))
-          mergeNum = bottom_row[mergeNum]
-          mergeRow = commandAction.merge(bottom_row,mergeNum)
+          mergeNum = bottom_row[mergeNum[0]]
+          mergeRow = commandAction.merge(bottom_row, top_row, mergeNum)
           if mergeRow == bottom_row:
             print("ERROR: No merge was done. Must be at least two matching numbers in the bottom row.")
           else:
-            bottom_row = mergeRow
+            bottom_row = mergeRow # is this wrong?
             turnCount += 1
 
     
@@ -210,6 +219,7 @@ def run_game(bottom_row):
         topCancel = int(commandArgs[1])
         bottomCancel = int(commandArgs[2])
         
+        # cancelTop and cancelBottom specify the indeces of the items to be canceled
         cancelTop = commandAction.findNumInRow(top_row, topCancel)
         cancelBottom = commandAction.findNumInRow(bottom_row, bottomCancel)
         findDigitInfo = commandAction.findDigitInNum(bottomCancel, topCancel)
@@ -226,19 +236,20 @@ def run_game(bottom_row):
           except ValueError:
             print("Enter a valid number")
 
-        if cancelTop == -1:
+        if cancelTop == []:
           print("ERROR: The specified top row number does not exist.")
           bCanCancel=False
-        if cancelBottom == -1:
+        if cancelBottom == []:
           print("ERROR: The specified bottom row number does not exist.")
           bCanCancel=False
         if bCanCancel:
-          canceledRow=commandAction.cancel(top_row,bottom_row,cancelTop,cancelBottom,cancelDigit)
-          if canceledRow==bottom_row:
+          cancelInfo = commandAction.cancel(top_row,bottom_row,cancelTop,cancelBottom,cancelDigit)
+          if cancelInfo[0] == 1:
             print("ERROR: No cancelation done. Digits must match exactly.")
+          elif cancelInfo[0] == 2:
+            print("ERROR: No cancelation done. Top numbers cannot cancel with their source bottom number until the bottom number is modified in some way.")
           else:
-            bottom_row=canceledRow
-            del top_row[cancelTop]
+            del top_row[cancelInfo[1]]
             turnCount+=1
 
     elif commandArgs[0]=="exit":
@@ -257,6 +268,7 @@ def run_game(bottom_row):
       print("\n\nEnter a valid command.")
   return
 
+
 def tutorial():
   print("\n"+separator)
   print("Thanks for playing my game! I don't have a name for it yet, so i'll just call it the \"Number Game\".")
@@ -272,7 +284,7 @@ def tutorial():
   print("\nIf multiple numbers in the bottom row are equal, you can \"merge\" them together (if the bottom row is [5, 21, 5], a merge will result in [5, 21] remaining).")
   print("You cannot merge top row numbers.\n")
   print("Is it recommended to start with 5 numbers, ranging from 1-50. This is the setting for default puzzles. Adding more numbers and increasing the max size increases puzzle difficulty.")
-  print("It is also technically not allowed to split an even number then cancel it with itself. I haven't patched this out yet, so please don't do it lol.")
+  print("\nIMPORTANT: It is also  not allowed to split an even number, then cancel it with itself. The bottom number must be modified in some way first.")
   print("When the game ends, it will return the number of turns you took to solve the puzzle. Try to solve puzzles as effieicnetly as you can!")
   print(separator+"\n")
 

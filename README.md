@@ -12,9 +12,7 @@ You can "cancel" digits in the top row with digits in the bottom row. This is ho
   
 If multiple numbers in the bottom row are equal, you can "merge" them together (if the bottom row is [5, 21, 5], a merge will result in [5, 21] remaining). You cannot merge top row numbers.
 
-Is it recommended to start with 5 numbers, ranging from 1-50. This is the setting for default puzzles. Adding more numbers and increasing the max size increases puzzle difficulty. It is also technically not allowed to split an even number then cancel it with itself. I haven't patched this out yet, so please don't do it lol.
+Is it recommended to start with 5 numbers, ranging from 1-50. This is the setting for default puzzles. Adding more numbers and increasing the max size increases puzzle difficulty. It is also not allowed to split an even number then cancel it with itself.
 
 When the game ends, it will return the number of turns you took to solve the puzzle. Try to solve puzzles as effieicnetly as you can!
 Don't be a nerd and criticise me for (probably) coding this poorly. Just enjoy the game damnit.
-
-Image tutorial below.
