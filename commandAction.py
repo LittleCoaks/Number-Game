@@ -124,6 +124,7 @@ def cancel(topRow,bottomRow,top,bottom,digit):
             didCancel[0] = 2
 
       if (didCancel[0] == 0):
+        didCancel[1] = iTop
         iCanceled = -1
         for i in range(0, len(bottomRow)):
           if bottomRow[i]['ID'] == bottomRowID and hasCanceled==True:
