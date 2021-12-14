@@ -98,6 +98,7 @@ def run_game(bottom_row):
       print(separator+"\n")
       return
     
+    # not sure if this is needed anymore
     topRowLength=0
     for vals in top_row:
       topRowLength+=1
@@ -115,7 +116,12 @@ def run_game(bottom_row):
     # index 0 == type of commnand
     # index 1 is number to execute command on
     commandArgs = command.split()
-
+    
+     # prevent error if command has no contents
+    try:
+      commandArgs[0]
+    except IndexError:
+      commandArgs.append("")
 
     if commandArgs[0] == "help":
       commandAction.help()
