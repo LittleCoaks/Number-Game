@@ -260,8 +260,7 @@ def run_game(bottom_row):
       run=1
       print("\n"+separator)
       print("GAME OVER")
-      print("Original puzzle:",originalPuzzle) # for some bs reason this is printing the last bottom row instead of the original puzzle
-      # like literally wtf, i never touch this variable inside the while loop
+      print("Original puzzle:",originalPuzzle)
       print("Puzzle quit after "+str(turnCount)+" turns.")
       print(separator+"\n")
 
